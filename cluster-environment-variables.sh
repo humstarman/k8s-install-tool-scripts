@@ -3,7 +3,7 @@
 MASTER=$(sed s/","/" "/g ./master.csv)
 NET_ID=$(cat ./master.csv)
 NET_ID=${NET_ID%%,*}
-NET_ID=${NET_ID%,*}
+NET_ID=${NET_ID%.*}
 NODE_EXISTENCE=true
 if [ ! -f ./node.csv ]; then
   NODE_EXISTENCE=false
@@ -18,7 +18,6 @@ done
 echo '---'
 echo $NET_ID
 echo $NODE_EXISTENCE
-exit 0
 
 mkdir -p ./tmp
 BOOTSTRAP_TOKEN=$(head -c 16 /dev/urandom | od -An -t x | tr -d ' ')
