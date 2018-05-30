@@ -2,21 +2,23 @@
 
 # 1 download and install CFSSL
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - download CFSSL ... "
-while true; do
-  wget https://pkg.cfssl.org/R1.2/cfssl_linux-amd64
-  chmod +x cfssl_linux-amd64
-  mv cfssl_linux-amd64 /usr/local/bin/cfssl
-  wget https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64
-  chmod +x cfssljson_linux-amd64
-  mv cfssljson_linux-amd64 /usr/local/bin/cfssljson
-  wget https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64
-  chmod +x cfssl-certinfo_linux-amd64
-  mv cfssl-certinfo_linux-amd64 /usr/local/bin/cfssl-certinfo
-  if [[ -x "$(command -v cfssl)" && -x "$(command -v cfssljson)" && -x "$(command -v cfssl-certinfo)" ]]; then
-    echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - CFSSL installed."
-    break
-  fi
-done
+if [[ ! -x "$(command -v cfssl)" && ! -x "$(command -v cfssljson)" && ! -x "$(command -v cfssl-certinfo)" ]]; then
+  while true; do
+    wget https://pkg.cfssl.org/R1.2/cfssl_linux-amd64
+    chmod +x cfssl_linux-amd64
+    mv cfssl_linux-amd64 /usr/local/bin/cfssl
+    wget https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64
+    chmod +x cfssljson_linux-amd64
+    mv cfssljson_linux-amd64 /usr/local/bin/cfssljson
+    wget https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64
+    chmod +x cfssl-certinfo_linux-amd64
+    mv cfssl-certinfo_linux-amd64 /usr/local/bin/cfssl-certinfo
+    if [[ -x "$(command -v cfssl)" && -x "$(command -v cfssljson)" && -x "$(command -v cfssl-certinfo)" ]]; then
+      echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - CFSSL installed."
+      break
+    fi
+  done
+fi
 
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - generate CA pem ... "
 # 2 generate template
