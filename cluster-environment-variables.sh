@@ -8,7 +8,7 @@ NODE_EXISTENCE=true
 if [ ! -f ./node.csv ]; then
   NODE_EXISTENCE=false
 else
-  if [ -z "$(cat ./node.csv)" ] 
+  if [ -z "$(cat ./node.csv)" ]; then
     NODE_EXISTENCE=false
   fi
 fi
