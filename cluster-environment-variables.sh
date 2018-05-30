@@ -21,15 +21,43 @@ echo $NODE_EXISTENCE
 
 mkdir -p ./tmp
 BOOTSTRAP_TOKEN=$(head -c 16 /dev/urandom | od -An -t x | tr -d ' ')
-cp ./k8s.env ./tmp
-sed -i "/^BOOTSTRAP_TOKEN=\"/ c BOOTSTRAP_TOKEN=\"${BOOTSTRAP_TOKEN}\"" ./tmp/k8s.env
+cat > ./tmp/k8s.env << EOF
+# TLS Bootstrapping 使用的Token，可以使用命令 head -c 16 /dev/urandom | od -An -t x | tr -d ' ' 生成
+BOOTSTRAP_TOKEN="$BOOTSTRAP_TOKEN"
+
+# 建议使用未用的网段来定义服务网段和Pod 网段
+# 服务网段(Service CIDR)，部署前路由不可达，部署后集群内部使用IP:Port可达
+SERVICE_CIDR="10.254.0.0/16"
+# Pod 网段(Cluster CIDR)，部署前路由不可达，部署后路由可达(flanneld 保证)
+CLUSTER_CIDR="172.30.0.0/16"
+
+# 服务端口范围(NodePort Range)
+NODE_PORT_RANGE="10000-32766"
+
+# flanneld 网络配置前缀
+FLANNEL_ETCD_PREFIX="/kubernetes/network"
+
+# kubernetes 服务IP(预先分配，一般为SERVICE_CIDR中的第一个IP)
+CLUSTER_KUBERNETES_SVC_IP="10.254.0.1"
+
+# 集群 DNS 服务IP(从SERVICE_CIDR 中预先分配)
+CLUSTER_DNS_SVC_IP="10.254.0.2"
+
+# 集群 DNS 域名
+CLUSTER_DNS_DOMAIN="cluster.local."
+EOF
+#cp ./k8s.env ./tmp
+#sed -i "/^BOOTSTRAP_TOKEN=\"/ c BOOTSTRAP_TOKEN=\"${BOOTSTRAP_TOKEN}\"" ./tmp/k8s.env
 
 ansible all -m shell -a "mkdir -p /var/env"
 ansible all -m copy -a "src=./tmp/k8s.env dest=/var/env"
 
 # token
 ansible all -m shell -a "mkdir -p /etc/kubernetes"
-echo -n -e "${BOOTSTRAP_TOKEN},kubelet-bootstrap,10001,\"system:kubelet-bootstrap\"" > ./tmp/token.csv
+cat > ./tmp/token.csv << EOF
+${BOOTSTRAP_TOKEN},kubelet-bootstrap,10001,"system:kubelet-bootstrap"
+EOF
+#echo -n -e "${BOOTSTRAP_TOKEN},kubelet-bootstrap,10001,\"system:kubelet-bootstrap\"" > ./tmp/token.csv
 ansible all -m copy -a "src=./tmp/token.csv dest=/etc/kubernetes"
 
 
@@ -92,6 +120,17 @@ rm -rf ./tmp
 
 ansible all -m script -a ./mk-env-conf.sh
 
+cat > ./write-to-etc_profile << EOF
+FILES=\$(find /var/env -name "*.env")
+
+if [ -n "\$FILES" ]
+then
+  for FILE in \$FILES
+  do
+    [ -f \$FILE ] && source \$FILE
+  done
+fi
+EOF
 ansible all -m copy -a "src=./write-to-etc_profile dest=/tmp"
 #IF=$(cat /etc/profile | grep 'FILES=$(find \/var\/env -name "\*.env"')
 ansible all -m script -a ./deal-env.sh
