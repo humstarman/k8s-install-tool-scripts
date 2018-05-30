@@ -27,7 +27,8 @@ echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - generate CA pem ... "
 mkdir -p ./ssl/ca
 cd ./ssl/ca && \
   cfssl print-defaults config > config.json && \
-  cfssl print-defaults csr > csr.json
+  cfssl print-defaults csr > csr.json && \
+  cd -
 
 # 3 generate ca
 FILE=./ssl/ca/ca-config.json
@@ -72,7 +73,8 @@ cat > $FILE << EOF
 EOF
 
 cd ./ssl/ca && \
-  cfssl gencert -initca ca-csr.json | cfssljson -bare ca
+  cfssl gencert -initca ca-csr.json | cfssljson -bare ca && \
+  cd -
 
 # 4 distribute ca pem
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - distribute CA pem ... "
