@@ -72,4 +72,4 @@ cd ./ssl/ca && \
 
 # 4 distribute ca pem
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - distribute CA pem ... "
-ansible all -m copy -a "src=./ssl/ca/ dest=/etc/kubernetes/ssl"
+ansible all -m copy -a "src=ssl/ca/ dest=/etc/kubernetes/ssl"
