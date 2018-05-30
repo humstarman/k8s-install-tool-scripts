@@ -1,5 +1,5 @@
 #!/bin/bash
-if [ ! -x "command -v ansible" ]; then
+if [ ! -x "$(command -v ansible)" ]; then
   echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [WARN] - no ansible found, start installing."
   if [ -x "$(command -v apt-get)" ]; then
     apt-get update
