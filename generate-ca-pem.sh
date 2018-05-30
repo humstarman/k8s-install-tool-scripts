@@ -30,8 +30,8 @@ cd ./ssl/ca && \
   cfssl print-defaults csr > csr.json
 
 # 3 generate ca
-touch ./ssl/ca/ca-config.json
-cat > ./ssl/ca/ca-config.json << EOF
+FILE=./ssl/ca/ca-config.json
+cat > $FILE << EOF
 {
   "signing": {
     "default": {
@@ -51,8 +51,8 @@ cat > ./ssl/ca/ca-config.json << EOF
   }
 }
 EOF
-touch ./ssl/ca/ca-csr.json
-cat > ./ssl/ca/ca-csr.json << EOF
+FILE=./ssl/ca/ca-csr.json
+cat > $FILE << EOF
 {
   "CN": "kubernetes",
   "key": {
