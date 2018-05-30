@@ -12,7 +12,7 @@ while true; do
   wget https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64
   chmod +x cfssl-certinfo_linux-amd64
   mv cfssl-certinfo_linux-amd64 /usr/local/bin/cfssl-certinfo
-  if [[ -x "$(command -v cfssli)" && -x "$(command -v cfssl)" && -x "$(command -v cfssl)"]]; then
+  if [[ -x "$(command -v cfssl)" && -x "$(command -v cfssljson)" && -x "$(command -v cfssl-certinfo)" ]]; then
     echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - CFSSL installed."
     break
   fi
