@@ -12,6 +12,12 @@ else
     NODE_EXISTENCE=false
   fi
 fi
+for ip in $MASTER; do
+  echo $ip
+done
+echo '---'
+echo $NET_ID
+echo $NODE_EXISTENCE
 exit 0
 
 mkdir -p ./tmp
