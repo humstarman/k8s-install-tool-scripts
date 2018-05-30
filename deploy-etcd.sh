@@ -66,10 +66,13 @@ cat >> $FILE << EOF
 }
 EOF
 
-cd ./ssl/ca && \
-  cfssl gencert -initca ca-csr.json | cfssljson -bare ca && \
+cd ./ssl/etcd && \
+  cfssl gencert -ca=/etc/kubernetes/ssl/ca.pem \
+  -ca-key=/etc/kubernetes/ssl/ca-key.pem \
+  -config=/etc/kubernetes/ssl/ca-config.json \
+  -profile=kubernetes etcd-csr.json | cfssljson -bare etcd && \
   cd -
 
 # 4 distribute ca pem
-echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - distribute CA pem ... "
-ansible all -m copy -a "src=ssl/ca/ dest=/etc/kubernetes/ssl"
+echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - distribute etcd pem ... "
+ansible master -m copy -a "src=ssl/etcd/ dest=/etc/kubernetes/ssl"
