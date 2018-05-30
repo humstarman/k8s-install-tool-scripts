@@ -18,6 +18,8 @@ if [[ ! -x "$(command -v cfssl)" && ! -x "$(command -v cfssljson)" && ! -x "$(co
       break
     fi
   done
+else
+  echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - CFSSL already existed. "
 fi
 
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - generate CA pem ... "
@@ -28,6 +30,7 @@ cd ./ssl/ca && \
   cfssl print-defaults csr > csr.json
 
 # 3 generate ca
+touch ./ssl/ca/ca-config.json
 cat > ./ssl/ca/ca-config.json << EOF
 {
   "signing": {
@@ -48,6 +51,7 @@ cat > ./ssl/ca/ca-config.json << EOF
   }
 }
 EOF
+touch ./ssl/ca/ca-csr.json
 cat > ./ssl/ca/ca-csr.json << EOF
 {
   "CN": "kubernetes",
