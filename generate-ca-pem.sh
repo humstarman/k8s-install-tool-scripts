@@ -2,7 +2,7 @@
 
 # 1 download and install CFSSL
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - download CFSSL ... "
-if [[ ! -x "$(command -v cfssl)" && ! -x "$(command -v cfssljson)" && ! -x "$(command -v cfssl-certinfo)" ]]; then
+if [[ ! -x "$(command -v cfssl)" || ! -x "$(command -v cfssljson)" || ! -x "$(command -v cfssl-certinfo)" ]]; then
   while true; do
     wget https://pkg.cfssl.org/R1.2/cfssl_linux-amd64
     chmod +x cfssl_linux-amd64

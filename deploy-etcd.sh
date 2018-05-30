@@ -4,25 +4,25 @@
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - download etcd ... "
 # etcd-v3.3.2-linux-amd64.tar.gz
 ETCD_VER=v3.3.2
-if [ ! -f "etcd-$ETCD_VER-linux-amd64.tar.gz" ]; then
+if [[ ! -x "$(command -v etcd)" || ! -x "$(command -v etcdctl)" ]]; then
   while true; do
-    wget https://github.com/coreos/etcd/releases/download/$ETCD_VER/etcd-$ETCD_VER-linux-amd64.tar.gz 
-    if [ -f "etcd-$ETCD_VER-linux-amd64.tar.gz" ]; then
-      echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - CFSSL installed."
+    wget https://github.com/coreos/etcd/releases/download/$ETCD_VER/etcd-$ETCD_VER-linux-amd64.tar.gz
+    tar -zxvf etcd-$ETCD_VER-linux-amd64.tar.gz
+    mkdir -p ./etcd-$ETCD_VER-linux-amd64/bin
+    mv ./etcd-$ETCD_VER-linux-amd64/etcd ./etcd-$ETCD_VER-linux-amd64/bin
+    mv ./etcd-$ETCD_VER-linux-amd64/etcdctl ./etcd-$ETCD_VER-linux-amd64/bin
+    echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - distribute etcd ... "
+    ansible master -m copy -a "src=./etcd-$ETCD_VER-linux-amd64/bin/ dest=/usr/local/bin mode='a+x'"
+    if [[ -x "$(command -v etcd)" && -x "$(command -v etcdctl)" ]]; then
+      echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - etcd installed."
       break
     fi
   done
 else
-  echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - CFSSL already existed. "
+  echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - etcd already existed. "
 fi
-tar -zxvf etcd-$ETCD_VER-linux-amd64.tar.gz
-mkdir -p ./etcd-$ETCD_VER-linux-amd64/bin
-mv ./etcd-$ETCD_VER-linux-amd64/etcd ./etcd-$ETCD_VER-linux-amd64/bin
-mv ./etcd-$ETCD_VER-linux-amd64/etcdctl ./etcd-$ETCD_VER-linux-amd64/bin
-echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - distribute etcd ... "
-ansible master -m copy -a "src=./etcd-$ETCD_VER-linux-amd64/bin/ dest=/usr/local/bin mode='a+x'"
 
-# 2 generate TLS pem 
+# 2 generate TLS pem
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - generate etcd TLS pem ... "
 mkdir -p ./ssl/etcd
 FILE=./ssl/etcd/etcd-csr.json
@@ -75,7 +75,7 @@ cd ./ssl/etcd && \
 
 # 3 distribute etcd pem
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - distribute etcd pem ... "
-ansible master -m copy -a "src=ssl/etcd/ dest=/etc/kubernetes/ssl"
+ansible master -m copy -a "src=ssl/etcd/ dest=/etc/etcd/ssl"
 
 # 4 generate etcd systemd unit
 mkdir -p ./systemd-unit
@@ -104,7 +104,7 @@ ExecStart=/usr/local/bin/etcd \\
   --listen-peer-urls=https://\${NODE_IP}:2380 \\
   --listen-client-urls=https://\${NODE_IP}:2379,http://127.0.0.1:2379 \\
   --advertise-client-urls=https://\${NODE_IP}:2379 \\
-  --initial-cluster-token=etcd-cluster-2 \
+  --initial-cluster-token=etcd-cluster-1 \\
   --initial-cluster=\${ETCD_NODES} \\
   --initial-cluster-state=new \\
   --data-dir=/var/lib/etcd
@@ -118,6 +118,7 @@ EOF
 FILE=etcd.service
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - distribute $FILE ... "
 ansible master -m copy -a "src=./systemd-unit/$FILE dest=/etc/systemd/system"
+echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - start $FILE ... "
 ansible master -m shell -a "systemctl daemon-reload"
 ansible master -m shell -a "systemctl enable $FILE"
-ansible master -m shell -a "systemctl restarte$FILE"
+ansible master -m shell -a "systemctl restart $FILE"
