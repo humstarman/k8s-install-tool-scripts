@@ -73,6 +73,51 @@ cd ./ssl/etcd && \
   -profile=kubernetes etcd-csr.json | cfssljson -bare etcd && \
   cd -
 
-# 4 distribute ca pem
+# 3 distribute etcd pem
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - distribute etcd pem ... "
 ansible master -m copy -a "src=ssl/etcd/ dest=/etc/kubernetes/ssl"
+
+# 4 generate etcd systemd unit
+mkdir -p ./systemd-unit
+FILE=./systemd-unit/etcd.service
+cat > $FILE << EOF
+[Unit]
+Description=Etcd Server
+After=network.target
+After=network-online.target
+Wants=network-online.target
+Documentation=https://github.com/coreos
+
+[Service]
+Type=notify
+EnvironmentFile=-/var/env/env.conf
+WorkingDirectory=/var/lib/etcd/
+ExecStart=/usr/local/bin/etcd \\
+  --name=\${NODE_NAME} \\
+  --cert-file=/etc/etcd/ssl/etcd.pem \\
+  --key-file=/etc/etcd/ssl/etcd-key.pem \\
+  --peer-cert-file=/etc/etcd/ssl/etcd.pem \\
+  --peer-key-file=/etc/etcd/ssl/etcd-key.pem \\
+  --trusted-ca-file=/etc/kubernetes/ssl/ca.pem \\
+  --peer-trusted-ca-file=/etc/kubernetes/ssl/ca.pem \\
+  --initial-advertise-peer-urls=https://\${NODE_IP}:2380 \\
+  --listen-peer-urls=https://\${NODE_IP}:2380 \\
+  --listen-client-urls=https://\${NODE_IP}:2379,http://127.0.0.1:2379 \\
+  --advertise-client-urls=https://\${NODE_IP}:2379 \\
+  --initial-cluster-token=etcd-cluster-2 \
+  --initial-cluster=\${ETCD_NODES} \\
+  --initial-cluster-state=new \\
+  --data-dir=/var/lib/etcd
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+EOF
+FILE=etcd.service
+echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - distribute $FILE ... "
+ansible master -m copy -a "src=./systemd-unit/$FILE dest=/etc/systemd/system"
+ansible master -m shell -a "systemctl daemon-reload"
+ansible master -m shell -a "systemctl enable $FILE"
+ansible master -m shell -a "systemctl restarte$FILE"
