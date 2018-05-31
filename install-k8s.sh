@@ -11,7 +11,7 @@ if [ ! -f ./kubernetes-server-linux-amd64.tar.gz ]; then
     wget https://dl.k8s.io/$KUBE_VER/kubernetes-server-linux-amd64.tar.gz && break
   done
 fi
-if [[ ! -x "$(command -v kubeictl)" ]]; then
+if [[ ! -x "$(command -v kubectl)" ]]; then
   while true; do
     # master
     #wget https://github.com/coreos/kubernetes/releases/download/$KUBE_VER/kubernetes-$KUBE_VER-linux-amd64.tar.gz
@@ -47,7 +47,7 @@ if [[ ! -x "$(command -v kubeictl)" ]]; then
       ansible node -m copy -a "src=./kubernetes/server/bin/$BIN/ dest=/usr/local/bin mode='a+x'"
     fi
     #
-    if [[ -x "$(command -v kubeictl)" ]]; then
+    if [[ -x "$(command -v kubectl)" ]]; then
       echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - kubernetes installed."
       break
     fi
