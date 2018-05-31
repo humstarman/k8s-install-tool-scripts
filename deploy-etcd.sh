@@ -4,9 +4,14 @@
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - download etcd ... "
 # etcd-v3.3.2-linux-amd64.tar.gz
 ETCD_VER=v3.3.2
+if [ ! -f etcd-$ETCD_VER-linux-amd64.tar.gz ]; then
+  while true; do
+    wget https://github.com/coreos/etcd/releases/download/$ETCD_VER/etcd-$ETCD_VER-linux-amd64.tar.gz && break
+  done
+fi
 if [[ ! -x "$(command -v etcd)" || ! -x "$(command -v etcdctl)" ]]; then
   while true; do
-    wget https://github.com/coreos/etcd/releases/download/$ETCD_VER/etcd-$ETCD_VER-linux-amd64.tar.gz
+    #wget https://github.com/coreos/etcd/releases/download/$ETCD_VER/etcd-$ETCD_VER-linux-amd64.tar.gz
     tar -zxvf etcd-$ETCD_VER-linux-amd64.tar.gz
     mkdir -p ./etcd-$ETCD_VER-linux-amd64/bin
     mv ./etcd-$ETCD_VER-linux-amd64/etcd ./etcd-$ETCD_VER-linux-amd64/bin
