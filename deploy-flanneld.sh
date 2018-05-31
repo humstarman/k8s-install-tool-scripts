@@ -1,6 +1,16 @@
 #!/bin/bash
 
 set -e
+:(){
+  FILES=$(find /var/env -name "*.env")
+
+  if [ -n "$FILES" ]; then
+    for FILE in $FILES
+    do
+      [ -f $FILE ] && source $FILE
+    done
+  fi
+};:
 
 # 1 download and install flannel 
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - download flannel ... "
@@ -30,34 +40,14 @@ else
   echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - flannel already existed. "
 fi
 
-# 2 generate TLS pem
-echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - generate flannel TLS pem ... "
-mkdir -p ./ssl/flannel
-FILE=./ssl/flannel/flannel-csr.json
+# 2 generate flannel pem
+echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - generate flannel pem ... "
+mkdir -p ./ssl/flanneld
+FILE=./ssl/flanneld/flanneld-csr.json
 cat > $FILE << EOF
 {
-  "CN": "flannel",
-  "hosts": [
-    "127.0.0.1",
-EOF
-MASTER=$(sed s/","/" "/g ./master.csv)
-#echo $MASTER
-i=0
-N_MASTER=$(echo $MASTER | wc | awk -F ' ' '{print $2}')
-#echo $N_MASTER
-for ip in $MASTER; do
-  i=$[i+1]
-  #echo $i
-  ip=\"$ip\"
-  if [[ $i < $N_MASTER ]]; then
-    ip+=,
-  fi
-  cat >> $FILE << EOF
-    $ip
-EOF
-done
-cat >> $FILE << EOF
-  ],
+  "CN": "flanneld",
+  "hosts": [],
   "key": {
     "algo": "rsa",
     "size": 2048
@@ -74,60 +64,58 @@ cat >> $FILE << EOF
 }
 EOF
 
-cd ./ssl/flannel && \
+cd ./ssl/flanneld && \
   cfssl gencert -ca=/etc/kubernetes/ssl/ca.pem \
   -ca-key=/etc/kubernetes/ssl/ca-key.pem \
   -config=/etc/kubernetes/ssl/ca-config.json \
-  -profile=kubernetes flannel-csr.json | cfssljson -bare flannel && \
+  -profile=kubernetes flanneld-csr.json | cfssljson -bare flanneld && \
   cd -
 
 # 3 distribute flannel pem
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - distribute flannel pem ... "
-ansible master -m copy -a "src=ssl/flannel/ dest=/etc/flannel/ssl"
+ansible all -m copy -a "src=./ssl/flanneld/ dest=/etc/flanneld/ssl"
 
-# 4 generate flannel systemd unit
+# 4 put pod network info into etcd cluster
+/usr/local/bin/etcdctl \
+  --endpoints=${ETCD_ENDPOINTS} \
+  --ca-file=/etc/kubernetes/ssl/ca.pem \
+  --cert-file=/etc/flanneld/ssl/flanneld.pem \
+  --key-file=/etc/flanneld/ssl/flanneld-key.pem \
+  set ${FLANNEL_ETCD_PREFIX}/config '{"Network":"'${CLUSTER_CIDR}'", "SubnetLen": 24, "Backend": {"Type": "vxlan"}}'
+
+# 5 generate flannel systemd unit
 mkdir -p ./systemd-unit
-FILE=./systemd-unit/flannel.service
+FILE=./systemd-unit/flanneld.service
 cat > $FILE << EOF
 [Unit]
-Description=Etcd Server
+Description=Flanneld overlay address etcd agent
 After=network.target
 After=network-online.target
 Wants=network-online.target
-Documentation=https://github.com/coreos
+After=etcd.service
+Before=docker.service
 
 [Service]
 Type=notify
 EnvironmentFile=-/var/env/env.conf
-WorkingDirectory=/var/lib/flannel/
-ExecStart=/usr/local/bin/flannel \\
-  --name=\${NODE_NAME} \\
-  --cert-file=/etc/flannel/ssl/flannel.pem \\
-  --key-file=/etc/flannel/ssl/flannel-key.pem \\
-  --peer-cert-file=/etc/flannel/ssl/flannel.pem \\
-  --peer-key-file=/etc/flannel/ssl/flannel-key.pem \\
-  --trusted-ca-file=/etc/kubernetes/ssl/ca.pem \\
-  --peer-trusted-ca-file=/etc/kubernetes/ssl/ca.pem \\
-  --initial-advertise-peer-urls=https://\${NODE_IP}:2380 \\
-  --listen-peer-urls=https://\${NODE_IP}:2380 \\
-  --listen-client-urls=https://\${NODE_IP}:2379,http://127.0.0.1:2379 \\
-  --advertise-client-urls=https://\${NODE_IP}:2379 \\
-  --initial-cluster-token=flannel-cluster-1 \\
-  --initial-cluster=\${ETCD_NODES} \\
-  --initial-cluster-state=new \\
-  --data-dir=/var/lib/flannel
+ExecStart=/usr/local/bin/flanneld \\
+  -etcd-cafile=/etc/kubernetes/ssl/ca.pem \\
+  -etcd-certfile=/etc/flanneld/ssl/flanneld.pem \\
+  -etcd-keyfile=/etc/flanneld/ssl/flanneld-key.pem \\
+  -etcd-endpoints=\${ETCD_ENDPOINTS} \\
+  -etcd-prefix=\${FLANNEL_ETCD_PREFIX}
+ExecStartPost=/usr/local/bin/mk-docker-opts.sh -k DOCKER_NETWORK_OPTIONS -d /run/flannel/docker
 Restart=on-failure
-RestartSec=5
-LimitNOFILE=65536
 
 [Install]
 WantedBy=multi-user.target
+RequiredBy=docker.service
 EOF
-FILE=flannel.service
+FILE=flanneld.service
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - distribute $FILE ... "
 ansible master -m copy -a "src=./systemd-unit/$FILE dest=/etc/systemd/system"
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - start $FILE ... "
-ansible master -m shell -a "systemctl daemon-reload"
-ansible master -m shell -a "systemctl enable $FILE"
-ansible master -m shell -a "systemctl restart $FILE"
+ansible all -m shell -a "systemctl daemon-reload"
+ansible all -m shell -a "systemctl enable $FILE"
+ansible all -m shell -a "systemctl restart $FILE"
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - flannel $FLANNEL_VER deployed."
