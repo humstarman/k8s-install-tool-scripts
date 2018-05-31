@@ -113,7 +113,7 @@ RequiredBy=docker.service
 EOF
 FILE=flanneld.service
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - distribute $FILE ... "
-ansible master -m copy -a "src=./systemd-unit/$FILE dest=/etc/systemd/system"
+ansible all -m copy -a "src=./systemd-unit/$FILE dest=/etc/systemd/system"
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - start $FILE ... "
 ansible all -m shell -a "systemctl daemon-reload"
 ansible all -m shell -a "systemctl enable $FILE"
