@@ -19,20 +19,33 @@ if [[ ! -x "$(command -v kubectl)" ]]; then
     BIN=kube-master-bin
     mkdir -p kubernetes/server/bin/$BIN
     cd kubernetes/server/bin && \
-      mv kube-apiserver $BIN && \
-      mv kube-controller-manager $BIN && \
-      mv kube-scheduler $BIN && \
+      cp kube-apiserver $BIN && \
+      cp kube-controller-manager $BIN && \
+      cp kube-scheduler $BIN && \
+      cp kubelet $BIN && \
+      cp kube-proxy $BIN && \
+      cp kubectl $BIN && \
       cd -
     ansible master -m copy -a "src=./kubernetes/server/bin/$BIN/ dest=/usr/local/bin mode='a+x'"
     # node
-    BIN=kube-node-bin
-    mkdir -p kubernetes/server/bin/$BIN
-    cd kubernetes/server/bin && \
-      mv kubelet $BIN && \
-      mv kube-proxy $BIN && \
-      mv kubectl $BIN && \
-      cd -
-    ansible all -m copy -a "src=./kubernetes/server/bin/$BIN/ dest=/usr/local/bin mode='a+x'"
+    NODE_EXISTENCE=true
+    if [ ! -f ./node.csv ]; then
+      NODE_EXISTENCE=false
+    else
+      if [ -z "$(cat ./node.csv)" ]; then
+        NODE_EXISTENCE=false
+      fi
+    fi
+    if $NODE_EXISTENCE; then
+      BIN=kube-node-bin
+      mkdir -p kubernetes/server/bin/$BIN
+      cd kubernetes/server/bin && \
+        cp kubelet $BIN && \
+        cp kube-proxy $BIN && \
+        cp kubectl $BIN && \
+        cd -
+      ansible node -m copy -a "src=./kubernetes/server/bin/$BIN/ dest=/usr/local/bin mode='a+x'"
+    fi
     #
     if [[ -x "$(command -v kubectl)" ]]; then
       echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - kubernetes installed."
