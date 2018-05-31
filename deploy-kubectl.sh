@@ -34,7 +34,7 @@ cd ./ssl/admin && \
 
 # 2 distribute admin pem
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - distribute admin pem ... "
-ansible master -m copy -a "src=./ssl/admin/ dest=/etc/kubernetes/ssl"
+ansible all -m copy -a "src=./ssl/admin/ dest=/etc/kubernetes/ssl"
 
 # 3 generate kubectl kubeconfig
 FILE=mk-kubectl-kubeconfig.sh
