@@ -122,7 +122,7 @@ LimitNOFILE=65536
 [Install]
 WantedBy=multi-user.target
 EOF
-FILE=etcd.service
+FILE=${FILE##*/}
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - distribute $FILE ... "
 ansible master -m copy -a "src=./systemd-unit/$FILE dest=/etc/systemd/system"
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - start $FILE ... "

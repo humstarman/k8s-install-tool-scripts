@@ -111,7 +111,7 @@ Restart=on-failure
 WantedBy=multi-user.target
 RequiredBy=docker.service
 EOF
-FILE=flanneld.service
+FILE=${FILE##*/}
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - distribute $FILE ... "
 ansible all -m copy -a "src=./systemd-unit/$FILE dest=/etc/systemd/system"
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - start $FILE ... "
