@@ -33,7 +33,6 @@ if [[ ! -x "$(command -v kubectl)" ]]; then
       mv kubectl $BIN && \
       cd -
     ansible all -m copy -a "src=./kubernetes/server/bin/$BIN/ dest=/usr/local/bin mode='a+x'"
-    #
     if [[ -x "$(command -v kubectl)" ]]; then
       echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - kubernetes installed."
       break
