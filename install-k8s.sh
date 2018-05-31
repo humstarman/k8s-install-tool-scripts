@@ -17,7 +17,7 @@ if [[ ! -x "$(command -v kubeictl)" ]]; then
     BIN=kube-master-bin
     mkdir -p kubernetes/server/bin/$BIN
     cd kubernetes/server/bin && \
-      cp kube-apiserve $BIN && \
+      cp kube-apiserver $BIN && \
       cp kube-controller-manager $BIN && \
       cp kube-scheduler $BIN && \
       cp kubelet $BIN && \
