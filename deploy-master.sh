@@ -64,7 +64,13 @@ cd ./ssl/kubernetes && \
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - distribute kubernetes pem ... "
 ansible master -m copy -a "src=./ssl/kubernetes/ dest=/etc/kubernetes/ssl"
 
-# 4 deploy kube-apiserver
+# 4 pepaare ennviorment variable about the number of masters
+N2SET=3
+MASTER=$(sed s/","/" "/g ./master.csv)
+N_MASTER=$(echo $MASTER | wc | awk -F ' ' '{print $2}')
+[[ "$N_MASTER" > "$N2SET" ]] && N2SET=$N_MASTER
+  
+# 5 deploy kube-apiserver
 mkdir -p ./systemd-unit
 FILE=./systemd-unit/kube-apiserver.service
 cat > $FILE << EOF
@@ -97,7 +103,7 @@ ExecStart=/usr/local/bin/kube-apiserver \\
   --etcd-servers=\${ETCD_ENDPOINTS} \\
   --enable-swagger-ui=true \\
   --allow-privileged=true \\
-  --apiserver-count=3 \\
+  --apiserver-count=$N2SET \\
   --audit-log-maxage=30 \\
   --audit-log-maxbackup=3 \\
   --audit-log-maxsize=100 \\
@@ -122,7 +128,7 @@ ansible master -m shell -a "systemctl enable $FILE"
 ansible master -m shell -a "systemctl restart $FILE"
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - $FILE deployed."
 
-# 5 deploy kube-controller-manager
+# 6 deploy kube-controller-manager
 mkdir -p ./systemd-unit
 FILE=./systemd-unit/kube-controller-manager.service
 cat > $FILE << EOF
@@ -160,7 +166,7 @@ ansible master -m shell -a "systemctl enable $FILE"
 ansible master -m shell -a "systemctl restart $FILE"
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - $FILE deployed."
 
-# 6 deploy kube-scheduler-
+# 7 deploy kube-scheduler-
 mkdir -p ./systemd-unit
 FILE=./systemd-unit/kube-scheduler.service
 cat > $FILE << EOF
