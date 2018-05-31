@@ -44,7 +44,7 @@ if [[ ! -x "$(command -v kubeictl)" ]]; then
         cp kube-proxy $BIN && \
         cp kubectl $BIN && \
         cd -
-        ansible master -m copy -a "src=./kubernetes/server/bin/$BIN/ dest=/usr/local/bin mode='a+x'"
+      ansible node -m copy -a "src=./kubernetes/server/bin/$BIN/ dest=/usr/local/bin mode='a+x'"
     fi
     #
     if [[ ! -x "$(command -v kubeictl)" ]]; then
