@@ -85,7 +85,9 @@ echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - docker $DOCKER_VER deploy
 
 # 4 deploy kubelet
 ## generate system:node-bootstrapper
-kubectl create clusterrolebinding kubelet-bootstrap --clusterrole=system:node-bootstrapper --user=kubelet-bootstrap
+if ! kubectl get clusterrolebindings | grep kubelet-bootstrap; then
+  kubectl create clusterrolebinding kubelet-bootstrap --clusterrole=system:node-bootstrapper --user=kubelet-bootstrap
+fi
 ## generate kubelet bootstrapping kubeconfig
 FILE=mk-kubelet-kubeconfig.sh
 cat > $FILE << EOF
