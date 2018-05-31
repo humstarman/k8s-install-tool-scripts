@@ -42,7 +42,7 @@ ansible all -m script -a ./docker-config.sh
 
 # 3 deploy docker
 mkdir -p ./systemd-unit
-FILE=./systemd-unit/kubernetes.service
+FILE=./systemd-unit/docker.service
 cat > $FILE << EOF
 [Unit]
 Description=Docker Application Container Engine
