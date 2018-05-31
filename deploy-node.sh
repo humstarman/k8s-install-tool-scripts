@@ -34,7 +34,7 @@ if [[ ! -x "$(command -v docker)" ]]; then
     fi
   done
 else
-  echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - kubernetes already existed. "
+  echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - docker already existed. "
 fi
 
 # 2 config docker
@@ -76,6 +76,7 @@ while true; do
   if docker info | grep $TARGET; then
     break
   else
+    sleep 1
     ansible all -m shell -a "systemctl daemon-reload"
     ansible all -m shell -a "systemctl restart $FILE"
   fi
@@ -123,26 +124,6 @@ ansible all -m script -a ./$FILE
 mkdir -p ./systemd-unit
 FILE=./systemd-unit/kubelet.service
 cat > $FILE << EOF
-[Unit]
-Description=Docker Application Container Engine
-Documentation=http://docs.docker.io
-
-[Service]
-EnvironmentFile=-/run/flannel/docker
-ExecStart=/usr/local/bin/dockerd --log-level=error \$DOCKER_NETWORK_OPTIONS
-ExecReload=/bin/kill -s HUP \$MAINPID
-Restart=on-failure
-RestartSec=5
-LimitNOFILE=infinity
-LimitNPROC=infinity
-LimitCORE=infinity
-Delegate=yes
-KillMode=process
-
-[Install]
-WantedBy=multi-user.target
-[root@node-161 tmp]# vim kubelet.service
-[root@node-161 tmp]# cat kubelet.service
 [Unit]
 Description=Kubernetes Kubelet
 Documentation=https://github.com/GoogleCloudPlatform/kubernetes
