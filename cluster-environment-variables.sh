@@ -12,12 +12,14 @@ else
     NODE_EXISTENCE=false
   fi
 fi
+if false; then
 for ip in $MASTER; do
   echo $ip
 done
 echo '---'
 echo $NET_ID
 echo $NODE_EXISTENCE
+fi
 
 mkdir -p ./tmp
 BOOTSTRAP_TOKEN=$(head -c 16 /dev/urandom | od -An -t x | tr -d ' ')
