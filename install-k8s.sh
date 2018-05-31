@@ -47,7 +47,7 @@ if [[ ! -x "$(command -v kubeictl)" ]]; then
       ansible node -m copy -a "src=./kubernetes/server/bin/$BIN/ dest=/usr/local/bin mode='a+x'"
     fi
     #
-    if [[ ! -x "$(command -v kubeictl)" ]]; then
+    if [[ -x "$(command -v kubeictl)" ]]; then
       echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - kubernetes installed."
       break
     fi
