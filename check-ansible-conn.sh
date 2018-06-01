@@ -1,6 +1,6 @@
 #!/usr/bin/expect
 set timeout 10
-password=""
+password="passwd"
 [ -f ./passwd.log ] && password=$(cat ./passwd.log)
 spawn ansible all -m ping 
 expect {
