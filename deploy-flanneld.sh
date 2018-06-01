@@ -16,9 +16,10 @@ set -e
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - download flannel ... "
 # flannel-v3.3.2-linux-amd64.tar.gz
 FLANNEL_VER=v0.10.0
+URL=https://github.com/coreos/flannel/releases/download/$FLANNEL_VER
 if [ ! -f flannel-$FLANNEL_VER-linux-amd64.tar.gz ]; then
   while true; do
-    wget https://github.com/coreos/flannel/releases/download/$FLANNEL_VER/flannel-${FLANNEL_VER}-linux-amd64.tar.gz && break
+    wget $URL/flannel-${FLANNEL_VER}-linux-amd64.tar.gz && break
   done
 fi
 if [[ ! -x "$(command -v flanneld)" || ! -x "$(command -v mk-docker-opts.sh)" ]]; then

@@ -15,16 +15,15 @@ set -e
 
 # 1 download and install docker 
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - download docker ... "
-# kubernetes-v3.3.2-linux-amd64.tar.gz
 DOCKER_VER=18.03.1
+URL=https://download.docker.com/linux/static/stable/x86_64
 if [ ! -f docker-${DOCKER_VER}-ce.tgz ]; then
   while true; do
-    wget https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VER}-ce.tgz && break
+    wget $URL/docker-${DOCKER_VER}-ce.tgz && break
   done
 fi
 if [[ ! -x "$(command -v docker)" ]]; then
   while true; do
-    #wget https://github.com/coreos/kubernetes/releases/download/$DOCKER_VER/kubernetes-$DOCKER_VER-linux-amd64.tar.gz
     tar -zxvf docker-${DOCKER_VER}-ce.tgz 
     echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - distribute docker ... "
     ansible all -m copy -a "src=./docker/ dest=/usr/local/bin mode='a+x'"

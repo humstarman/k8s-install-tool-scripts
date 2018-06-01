@@ -2,15 +2,17 @@
 
 # 1 download and install CFSSL
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - download CFSSL ... "
-if [[ ! -x "$(command -v cfssl)" || ! -x "$(command -v cfssljson)" || ! -x "$(command -v cfssl-certinfo)" ]]; then
+CFSSL_VER=R1.2
+URL=https://pkg.cfssl.org/$CFSSL_VER
+if [[ ! -f cfssl || ! -f cfssljson || ! -f cfssl-certinfo ]]; then
   while true; do
-    wget https://pkg.cfssl.org/R1.2/cfssl_linux-amd64
+    wget $URL/cfssl_linux-amd64
     chmod +x cfssl_linux-amd64
     mv cfssl_linux-amd64 /usr/local/bin/cfssl
-    wget https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64
+    wget $URL/cfssljson_linux-amd64
     chmod +x cfssljson_linux-amd64
     mv cfssljson_linux-amd64 /usr/local/bin/cfssljson
-    wget https://pkg.cfssl.org/R1.2/cfssl-certinfo_linux-amd64
+    wget $URL/cfssl-certinfo_linux-amd64
     chmod +x cfssl-certinfo_linux-amd64
     mv cfssl-certinfo_linux-amd64 /usr/local/bin/cfssl-certinfo
     if [[ -x "$(command -v cfssl)" && -x "$(command -v cfssljson)" && -x "$(command -v cfssl-certinfo)" ]]; then
@@ -79,3 +81,4 @@ cd ./ssl/ca && \
 # 4 distribute ca pem
 echo "$(date -d today +'%Y-%m-%d %H:%M:%S') - [INFO] - distribute CA pem ... "
 ansible all -m copy -a "src=ssl/ca/ dest=/etc/kubernetes/ssl"
+exit 0
