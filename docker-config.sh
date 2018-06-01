@@ -63,3 +63,44 @@ cat > /etc/docker/daemon.json << EOF
 EOF
 systemctl daemon-reload
 systemctl enable docker-iptables.service
+# optimize bridge-nf-call-iptables && bridge-nf-call-ip6tables
+## script:
+FILE=/usr/local/bin/opt-bridge-nf-call-iptables.sh
+cat > $FILE << EOF
+#!/bin/bash
+:(){
+  TARGET="\$1"
+  echo \$TARGET
+  FILE=/etc/sysctl.conf
+  if [ ! -f \$FILE ]; then
+    echo "\$TARGET" > \$FILE
+    return
+  fi
+  if cat \$FILE | grep "\$TARGET"; then return; fi
+  echo "\$TARGET" >> \$FILE
+}
+echo 1 > /proc/sys/net/bridge/bridge-nf-call-iptables
+echo 1 > /proc/sys/net/bridge/bridge-nf-call-ip6tables
+: "net.bridge.bridge-nf-call-ip6tables = 1"
+: "net.bridge.bridge-nf-call-iptables = 1"
+: "net.bridge.bridge-nf-call-arptables = 1"
+EOF
+chmod +x $FILE
+## systemd unit:
+FILE=/etc/systemd/system/opt-bridge-nf-call-iptables.service
+cat > $FILE << EOF
+[Unit]
+Description=Optimization of bridge nf call iptables
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/opt-bridge-nf-call-iptables.sh
+
+[Install]
+WantedBy=multi-user.target
+EOF
+FILE=${FILE##*/}
+systemctl daemon-reload
+systemctl enable $FILE 
+
+exit 0
