@@ -9,12 +9,25 @@ if [ -x "$(command -v yum)" ]; then
   yum install -y conntrack
   FIREWALL="firewalld"
 elif [ -x "$(command -v apt-get)" ]; then
-  apt-get update
-  apt-get install -y \
-    apt-transport-https \
-    ca-certificates \
-    curl \
-    software-properties-common
+  # for Ubuntu
+  if cat /etc/issue | grep Ubuntu; then
+    apt-get update
+    apt-get install -y \
+      apt-transport-https \
+      ca-certificates \
+      curl \
+      software-properties-common
+  fi
+  # for Debian
+  if cat /etc/issue | grep Debian; then
+    apt-get update
+    apt-get install \
+     apt-transport-https \
+     ca-certificates \
+     curl \
+     gnupg2 \
+     software-properties-common
+  fi
   apt-get update
   apt-get install -y conntrack
   FIREWALL="ufw"
