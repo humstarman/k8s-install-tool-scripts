@@ -38,7 +38,7 @@ cat > $FILE << EOF
 {
   "signing": {
     "default": {
-      "expiry": "87600h"
+      "expiry": "8760h"
     },
     "profiles": {
       "kubernetes": {
@@ -48,7 +48,7 @@ cat > $FILE << EOF
             "server auth",
             "client auth"
         ],
-        "expiry": "87600h"
+        "expiry": "8760h"
       }
     }
   }
